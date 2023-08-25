@@ -3,17 +3,17 @@ import { range, type Awaitable } from '@discordjs/util';
 import { AsyncEventEmitter } from '@vladfrangu/async_event_emitter';
 import {
 	Routes,
-	type APIGatewayBotInfo,
+	type APIGatewayInfo,
 	type GatewayIdentifyProperties,
 	type GatewayPresenceUpdateData,
-	type RESTGetAPIGatewayBotResult,
+	type RESTGetAPIGatewayResult,
 	type GatewayIntentBits,
 	type GatewaySendPayload,
 } from 'discord-api-types/v10';
 import type { IShardingStrategy } from '../strategies/sharding/IShardingStrategy.js';
 import type { IIdentifyThrottler } from '../throttling/IIdentifyThrottler.js';
 import { DefaultWebSocketManagerOptions, type CompressionMethod, type Encoding } from '../utils/constants.js';
-import type { WebSocketShardDestroyOptions, WebSocketShardEventsMap } from './WebSocketShard.js';
+import { type WebSocketShardDestroyOptions, type WebSocketShardEventsMap } from './WebSocketShard.js';
 
 /**
  * Represents a range of shard ids
@@ -196,7 +196,7 @@ export class WebSocketManager extends AsyncEventEmitter<ManagerShardEventsMap> {
 	 * Internal cache for a GET /gateway/bot result
 	 */
 	private gatewayInformation: {
-		data: APIGatewayBotInfo;
+		data: APIGatewayInfo;
 		expiresAt: number;
 	} | null = null;
 
@@ -232,10 +232,10 @@ export class WebSocketManager extends AsyncEventEmitter<ManagerShardEventsMap> {
 			}
 		}
 
-		const data = (await this.options.rest.get(Routes.gatewayBot())) as RESTGetAPIGatewayBotResult;
+		const data = (await this.options.rest.get(Routes.gateway())) as RESTGetAPIGatewayResult;
 
 		// For single sharded bots session_start_limit.reset_after will be 0, use 5 seconds as a minimum expiration time
-		this.gatewayInformation = { data, expiresAt: Date.now() + (data.session_start_limit.reset_after || 5_000) };
+		this.gatewayInformation = { data, expiresAt: Date.now() + 5_000 };
 		return this.gatewayInformation.data;
 	}
 
@@ -283,8 +283,9 @@ export class WebSocketManager extends AsyncEventEmitter<ManagerShardEventsMap> {
 				shardIds = [...range({ start, end: end + 1 })];
 			}
 		} else {
-			const data = await this.fetchGatewayInformation();
-			shardIds = [...range(this.options.shardCount ?? data.shards)];
+			// const data = await this.fetchGatewayInformation();
+			// shardIds = [...range(this.options.shardCount ?? data.shards)];
+			shardIds = [...range(this.options.shardCount ?? 1)];
 		}
 
 		this.shardIds = shardIds;
@@ -294,14 +295,14 @@ export class WebSocketManager extends AsyncEventEmitter<ManagerShardEventsMap> {
 	public async connect() {
 		const shardCount = await this.getShardCount();
 
-		const data = await this.fetchGatewayInformation();
-		if (data.session_start_limit.remaining < shardCount) {
-			throw new Error(
-				`Not enough sessions remaining to spawn ${shardCount} shards; only ${
-					data.session_start_limit.remaining
-				} remaining; resets at ${new Date(Date.now() + data.session_start_limit.reset_after).toISOString()}`,
-			);
-		}
+		// const data = await this.fetchGatewayInformation();
+		// if (data.session_start_limit.remaining < shardCount) {
+		// 	throw new Error(
+		// 		`Not enough sessions remaining to spawn ${shardCount} shards; only ${
+		// 			data.session_start_limit.remaining
+		// 		} remaining; resets at ${new Date(Date.now() + data.session_start_limit.reset_after).toISOString()}`,
+		// 	);
+		// }
 
 		// First, make sure all our shards are spawned
 		await this.updateShardCount(shardCount);

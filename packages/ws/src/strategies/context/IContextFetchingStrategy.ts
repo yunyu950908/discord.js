@@ -1,5 +1,5 @@
 import type { Awaitable } from '@discordjs/util';
-import type { APIGatewayBotInfo } from 'discord-api-types/v10';
+import type { APIGatewayInfo } from 'discord-api-types/v10';
 import type { SessionInfo, WebSocketManager, WebSocketManagerOptions } from '../../ws/WebSocketManager.js';
 
 export interface FetchingStrategyOptions
@@ -13,7 +13,7 @@ export interface FetchingStrategyOptions
 		| 'shardIds'
 		| 'updateSessionInfo'
 	> {
-	readonly gatewayInformation: APIGatewayBotInfo;
+	readonly gatewayInformation: APIGatewayInfo;
 	readonly shardCount: number;
 }
 
