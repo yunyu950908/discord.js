@@ -30,8 +30,9 @@ const getDefaultSessionStore = lazy(() => new Collection<number, SessionInfo | n
  */
 export const DefaultWebSocketManagerOptions = {
 	async buildIdentifyThrottler(manager: WebSocketManager) {
-		const info = await manager.fetchGatewayInformation();
-		return new SimpleIdentifyThrottler(info.session_start_limit.max_concurrency);
+		// const info = await manager.fetchGatewayInformation();
+		const shardCount = await manager.getShardCount();
+		return new SimpleIdentifyThrottler(Math.min(shardCount, 3));
 	},
 	buildStrategy: (manager) => new SimpleShardingStrategy(manager),
 	shardCount: null,
